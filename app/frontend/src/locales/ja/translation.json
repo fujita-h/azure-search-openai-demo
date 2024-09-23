@@ -6,6 +6,7 @@
     "login": "ログイン",
     "logout": "ログアウト",
     "clearChat": "チャットをクリア",
+    "openHistory": "チャット履歴を開く",
     "upload": {
         "fileLabel": "ファイルをアップロード：",
         "uploadedFilesLabel": "アップロード済みのファイル：",

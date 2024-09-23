@@ -6,6 +6,7 @@
     "login": "Login",
     "logout": "Logout",
     "clearChat": "Clear chat",
+    "openHistory": "Open chat history",
     "upload": {
         "fileLabel": "Upload file:",
         "uploadedFilesLabel": "Previously uploaded files:",
