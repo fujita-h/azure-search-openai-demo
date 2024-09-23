@@ -26,6 +26,7 @@ export const HistoryPanel = ({
     const loadMoreHistory = async () => {
         if (type === "IndexedDB") {
             if (historyDb) {
+                // NEED Refactor, use IndexedDBApproach
                 setIsLoading(true);
                 const tx = historyDb.transaction("chat-history", "readonly");
                 const store = tx.objectStore("chat-history");
@@ -55,6 +56,7 @@ export const HistoryPanel = ({
 
     const handleSelect = async (id: string) => {
         if (type === "IndexedDB") {
+            // NEED Refactor, use IndexedDBApproach
             if (!historyDb) return;
             const item = await historyDb.get("chat-history", id);
             onChatSelected(item.answers);
@@ -63,6 +65,7 @@ export const HistoryPanel = ({
 
     const handleDelete = async (id: string) => {
         if (type === "IndexedDB") {
+            // NEED Refactor, use IndexedDBApproach
             if (!historyDb) return;
             historyDb.delete("chat-history", id);
             setHistory(prevHistory => prevHistory.filter(item => item.id !== id));
@@ -71,11 +74,13 @@ export const HistoryPanel = ({
 
     useEffect(() => {
         if (type === "IndexedDB") {
+            // NEED Refactor, use IndexedDBApproach
             const initDB = async () => {
                 const database = await openDB("chat-database", 1, {
                     upgrade(db) {
                         if (!db.objectStoreNames.contains("chat-history")) {
                             db.createObjectStore("chat-history", { keyPath: "id" });
+                            // need to add index for timestamp
                         }
                     }
                 });
@@ -91,6 +96,7 @@ export const HistoryPanel = ({
         <Panel
             type={PanelType.customNear}
             style={{ overflowY: "scroll" }}
+            headerText="チャット履歴"
             customWidth="300px"
             isBlocking={false}
             isOpen={isOpen}
@@ -106,7 +112,7 @@ export const HistoryPanel = ({
         >
             {Object.entries(groupedHistory).map(([group, items]) => (
                 <div key={group} className={""}>
-                    <h3 className={""}>{group}</h3>
+                    <p className={""}>{group}</p>
                     {items.map(item => (
                         <HistoryItem key={item.id} item={item} onSelect={handleSelect} onDelete={handleDelete} />
                     ))}
