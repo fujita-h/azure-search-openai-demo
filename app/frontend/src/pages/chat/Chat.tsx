@@ -474,6 +474,7 @@ const Chat = () => {
                 )}
 
                 <HistoryPanel
+                    type={historyType}
                     isOpen={isHistoryPanelOpen}
                     onClose={() => setIsHistoryPanelOpen(false)}
                     onChatSelected={answers => {
