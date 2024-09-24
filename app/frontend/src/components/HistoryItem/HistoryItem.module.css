@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px;
+  padding: 4px 8px;
   border-radius: 6px;
   transition: background-color 0.2s;
 }
@@ -14,17 +14,20 @@
 .historyItemButton {
   flex-grow: 1;
   text-align: left;
-  margin-right: 8px;
+  padding: 0;
+  margin-right: 4px;
   background: none;
   border: none;
   cursor: pointer;
 }
 
 .historyItemTitle {
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 4px;
-  margin-top: 0;
+  font-size: 1rem;
+}
+
+.deleteIcon {
+  width: 20px;
+  height: 20px;
 }
 
 .deleteButton {
@@ -35,6 +38,7 @@
   cursor: pointer;
   padding: 4px;
   border-radius: 9999px;
+  color: #6b7280;
 }
 
 .historyItem:hover .deleteButton,
@@ -43,7 +47,7 @@
 }
 
 .deleteButton:hover {
-  background-color: #e5e7eb;
+  color: #111827;
 }
 
 .modalOverlay {
@@ -71,11 +75,13 @@
 .modalTitle {
   font-size: 20px;
   font-weight: 600;
+  margin-top: 0px;
   margin-bottom: 16px;
 }
 
 .modalDescription {
-  margin-bottom: 24px;
+  margin-top: 0px;
+  margin-bottom: 16px;
 }
 
 .modalActions {

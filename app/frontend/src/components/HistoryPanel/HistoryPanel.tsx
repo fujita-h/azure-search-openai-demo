@@ -3,24 +3,37 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { HistoryData, HistoryItem } from "../HistoryItem";
 import { Answers, HistoryProviderOptions } from "../HistoryProviders/IProvider";
 import { useHistoryManager, HistoryMetaData } from "../HistoryProviders";
+import { useTranslation } from "react-i18next";
+import styles from "./HistoryPanel.module.css";
 
 const HISTORY_COUNT_PER_LOAD = 20;
 
 export const HistoryPanel = ({
     provider,
     isOpen,
+    notify,
     onClose,
     onChatSelected
 }: {
     provider: HistoryProviderOptions;
     isOpen: boolean;
+    notify: boolean;
     onClose: () => void;
     onChatSelected: (answers: Answers) => void;
 }) => {
     const historyManager = useHistoryManager(provider);
     const [history, setHistory] = useState<HistoryMetaData[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [hasMoreHistory, setHasMoreHistory] = useState(true);
+    const [hasMoreHistory, setHasMoreHistory] = useState(false);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        if (notify) {
+            setHistory([]);
+            historyManager.resetContinuationToken();
+            setHasMoreHistory(true);
+        }
+    }, [isOpen, notify]);
 
     const loadMoreHistory = async () => {
         setIsLoading(() => true);
@@ -46,17 +59,16 @@ export const HistoryPanel = ({
 
     const groupedHistory = useMemo(() => groupHistory(history), [history]);
 
+    const { t } = useTranslation();
+
     return (
         <Panel
             type={PanelType.customNear}
-            style={{ overflowY: "scroll" }}
-            headerText="チャット履歴"
+            style={{ padding: "0px" }}
+            headerText={t("history.chatHistory")}
             customWidth="300px"
             isBlocking={false}
             isOpen={isOpen}
-            onOpen={() => {
-                loadMoreHistory();
-            }}
             onDismiss={() => onClose()}
             onDismissed={() => {
                 setHistory([]);
@@ -64,16 +76,18 @@ export const HistoryPanel = ({
                 historyManager.resetContinuationToken();
             }}
         >
-            {Object.entries(groupedHistory).map(([group, items]) => (
-                <div key={group} className={""}>
-                    <p className={""}>{group}</p>
-                    {items.map(item => (
-                        <HistoryItem key={item.id} item={item} onSelect={handleSelect} onDelete={handleDelete} />
-                    ))}
-                </div>
-            ))}
-            {history.length === 0 && <p>チャット履歴がありません。</p>}
-            {hasMoreHistory && !isLoading && <InfiniteLoadingButton func={loadMoreHistory} />}
+            <div>
+                {Object.entries(groupedHistory).map(([group, items]) => (
+                    <div key={group} className={styles.group}>
+                        <p className={styles.groupLabel}>{t(group)}</p>
+                        {items.map(item => (
+                            <HistoryItem key={item.id} item={item} onSelect={handleSelect} onDelete={handleDelete} />
+                        ))}
+                    </div>
+                ))}
+                {history.length === 0 && <p>{t("history.noHistory")}</p>}
+                {hasMoreHistory && !isLoading && <InfiniteLoadingButton func={loadMoreHistory} />}
+            </div>
         </Panel>
     );
 };
@@ -94,13 +108,13 @@ function groupHistory(history: HistoryData[]) {
             let group;
 
             if (itemDate >= today) {
-                group = "今日";
+                group = "history.today";
             } else if (itemDate >= yesterday) {
-                group = "昨日";
+                group = "history.yesterday";
             } else if (itemDate >= lastWeek) {
-                group = "過去7日間";
+                group = "history.last7days";
             } else if (itemDate >= lastMonth) {
-                group = "過去30日間";
+                group = "history.last30days";
             } else {
                 group = itemDate.toLocaleDateString(undefined, { year: "numeric", month: "long" });
             }

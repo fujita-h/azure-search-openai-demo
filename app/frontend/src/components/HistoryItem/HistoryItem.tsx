@@ -1,5 +1,8 @@
 import { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "./HistoryItem.module.css";
+import { DefaultButton } from "@fluentui/react";
+import { Delete24Regular } from "@fluentui/react-icons";
 
 export interface HistoryData {
     id: string;
@@ -26,53 +29,29 @@ export function HistoryItem({ item, onSelect, onDelete }: HistoryItemProps) {
             <button onClick={() => onSelect(item.id)} className={styles.historyItemButton}>
                 <div className={styles.historyItemTitle}>{item.title}</div>
             </button>
-            <button onClick={() => setIsModalOpen(true)} className={styles.deleteButton} aria-label="チャットを削除">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 6h18"></path>
-                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                </svg>
+            <button onClick={() => setIsModalOpen(true)} className={styles.deleteButton} aria-label="delete this chat history">
+                <Delete24Regular className={styles.deleteIcon} />
             </button>
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onConfirm={handleDelete}
-                title="本当に削除しますか？"
-                description="この操作は取り消せません。チャット履歴が完全に削除されます。"
-            />
+            <DeleteHistoryModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={handleDelete} />
         </div>
     );
 }
 
-function Modal({
-    isOpen,
-    onClose,
-    onConfirm,
-    title,
-    description
-}: {
-    isOpen: boolean;
-    onClose: () => void;
-    onConfirm: () => void;
-    title: string;
-    description: string;
-}) {
+function DeleteHistoryModal({ isOpen, onClose, onConfirm }: { isOpen: boolean; onClose: () => void; onConfirm: () => void }) {
     if (!isOpen) return null;
-
+    const { t } = useTranslation();
     return (
         <div className={styles.modalOverlay}>
             <div className={styles.modalContent}>
-                <h2 className={styles.modalTitle}>{title}</h2>
-                <p className={styles.modalDescription}>{description}</p>
+                <h2 className={styles.modalTitle}>{t("history.deleteModalTitle")}</h2>
+                <p className={styles.modalDescription}>{t("history.deleteModalDescription")}</p>
                 <div className={styles.modalActions}>
-                    <button onClick={onClose} className={styles.modalCancelButton}>
-                        キャンセル
-                    </button>
-                    <button onClick={onConfirm} className={styles.modalConfirmButton}>
-                        削除
-                    </button>
+                    <DefaultButton onClick={onClose} className={styles.modalCancelButton}>
+                        {t("history.cancelLabel")}
+                    </DefaultButton>
+                    <DefaultButton onClick={onConfirm} className={styles.modalConfirmButton}>
+                        {t("history.deleteLabel")}
+                    </DefaultButton>
                 </div>
             </div>
         </div>

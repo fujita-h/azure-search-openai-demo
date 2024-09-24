@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { Helmet } from "react-helmet-async";
-import { Checkbox, Panel, DefaultButton, TextField, ITextFieldProps, ICheckboxProps, PanelType } from "@fluentui/react";
+import { Checkbox, Panel, DefaultButton, TextField, ITextFieldProps, ICheckboxProps } from "@fluentui/react";
 import { SparkleFilled } from "@fluentui/react-icons";
 import { useId } from "@fluentui/react-hooks";
 import readNDJSONStream from "ndjson-readablestream";
@@ -479,6 +479,7 @@ const Chat = () => {
                     <HistoryPanel
                         provider={historyProvider}
                         isOpen={isHistoryPanelOpen}
+                        notify={!isStreaming && !isLoading}
                         onClose={() => setIsHistoryPanelOpen(false)}
                         onChatSelected={answers => {
                             if (answers.length === 0) return;

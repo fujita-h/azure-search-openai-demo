@@ -11,11 +11,11 @@ interface Props {
 }
 
 export const HistoryButton = ({ className, disabled, onClick }: Props) => {
-    const { t, i18n } = useTranslation();
+    const { t } = useTranslation();
     return (
         <div className={`${styles.container} ${className ?? ""}`}>
             <Button icon={<History24Regular />} disabled={disabled} onClick={onClick}>
-                {t("openHistory")}
+                {t("history.openChatHistory")}
             </Button>
         </div>
     );
