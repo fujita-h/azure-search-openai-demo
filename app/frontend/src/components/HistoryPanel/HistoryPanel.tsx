@@ -1,96 +1,50 @@
 import { Panel, PanelType } from "@fluentui/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { IDBPDatabase, openDB } from "idb";
-import { Answers, ApproachType } from "./Approaches/IApproach";
-import { HistoryItem, HistoryData } from "../HistoryItem";
+import { HistoryData, HistoryItem } from "../HistoryItem";
+import { Answers, HistoryProviderOptions } from "../HistoryProviders/IProvider";
+import { useHistoryManager, HistoryMetaData } from "../HistoryProviders";
 
-const HISTORY_COUNT = 20;
+const HISTORY_COUNT_PER_LOAD = 20;
 
 export const HistoryPanel = ({
-    type,
+    provider,
     isOpen,
     onClose,
     onChatSelected
 }: {
-    type: ApproachType;
+    provider: HistoryProviderOptions;
     isOpen: boolean;
     onClose: () => void;
     onChatSelected: (answers: Answers) => void;
 }) => {
-    const [historyDb, setHistoryDb] = useState<IDBPDatabase<unknown> | undefined>();
-    const [history, setHistory] = useState<{ id: string; title: string; timestamp: number }[]>([]);
+    const historyManager = useHistoryManager(provider);
+    const [history, setHistory] = useState<HistoryMetaData[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasMoreHistory, setHasMoreHistory] = useState(true);
-    const cursorRef = useRef<IDBValidKey | undefined>("");
 
     const loadMoreHistory = async () => {
-        if (type === "IndexedDB") {
-            if (historyDb) {
-                // NEED Refactor, use IndexedDBApproach
-                setIsLoading(true);
-                const tx = historyDb.transaction("chat-history", "readonly");
-                const store = tx.objectStore("chat-history");
-
-                let cursor = cursorRef.current
-                    ? await store.openCursor(IDBKeyRange.upperBound(cursorRef.current), "prev")
-                    : await store.openCursor(null, "prev");
-                if (!cursor) {
-                    setHasMoreHistory(false);
-                    return;
-                }
-                const loadedItems: any[] = [];
-                for (let i = 0; i < HISTORY_COUNT && cursor; i++) {
-                    loadedItems.push(cursor.value);
-                    cursor = await cursor.continue();
-                }
-                cursorRef.current = cursor?.key;
-
-                setHistory(prevHistory => [...prevHistory, ...loadedItems]);
-                if (cursorRef.current === undefined) {
-                    setHasMoreHistory(false);
-                }
-                setIsLoading(false);
-            }
+        setIsLoading(() => true);
+        const items = await historyManager.getNextItems(HISTORY_COUNT_PER_LOAD);
+        if (items.length === 0) {
+            setHasMoreHistory(false);
         }
+        setHistory(prevHistory => [...prevHistory, ...items]);
+        setIsLoading(() => false);
     };
 
     const handleSelect = async (id: string) => {
-        if (type === "IndexedDB") {
-            // NEED Refactor, use IndexedDBApproach
-            if (!historyDb) return;
-            const item = await historyDb.get("chat-history", id);
-            onChatSelected(item.answers);
+        const item = await historyManager.getItem(id);
+        if (item) {
+            onChatSelected(item);
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (type === "IndexedDB") {
-            // NEED Refactor, use IndexedDBApproach
-            if (!historyDb) return;
-            historyDb.delete("chat-history", id);
-            setHistory(prevHistory => prevHistory.filter(item => item.id !== id));
-        }
+        await historyManager.deleteItem(id);
+        setHistory(prevHistory => prevHistory.filter(item => item.id !== id));
     };
 
-    useEffect(() => {
-        if (type === "IndexedDB") {
-            // NEED Refactor, use IndexedDBApproach
-            const initDB = async () => {
-                const database = await openDB("chat-database", 1, {
-                    upgrade(db) {
-                        if (!db.objectStoreNames.contains("chat-history")) {
-                            db.createObjectStore("chat-history", { keyPath: "id" });
-                            // need to add index for timestamp
-                        }
-                    }
-                });
-                setHistoryDb(database);
-            };
-            initDB();
-        }
-    }, []);
-
-    const groupedHistory = useMemo(() => groupChatHistory(history), [history]);
+    const groupedHistory = useMemo(() => groupHistory(history), [history]);
 
     return (
         <Panel
@@ -106,8 +60,8 @@ export const HistoryPanel = ({
             onDismiss={() => onClose()}
             onDismissed={() => {
                 setHistory([]);
-                cursorRef.current = "";
                 setHasMoreHistory(true);
+                historyManager.resetContinuationToken();
             }}
         >
             {Object.entries(groupedHistory).map(([group, items]) => (
@@ -124,7 +78,7 @@ export const HistoryPanel = ({
     );
 };
 
-function groupChatHistory(history: HistoryData[]) {
+function groupHistory(history: HistoryData[]) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today);
@@ -177,7 +131,7 @@ const InfiniteLoadingButton = ({ func }: { func: () => void }) => {
             },
             {
                 root: null,
-                threshold: 0.1 // 10% of the button must be visible
+                threshold: 0
             }
         );
 
@@ -192,9 +146,5 @@ const InfiniteLoadingButton = ({ func }: { func: () => void }) => {
         };
     }, []);
 
-    return (
-        <button ref={buttonRef} onClick={func}>
-            さらに読み込む
-        </button>
-    );
+    return <button ref={buttonRef} onClick={func} />;
 };
